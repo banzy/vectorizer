@@ -26,7 +26,7 @@ compact evidence with:
 python scripts/prepare_evidence.py logo-designer-brief.json --out evidence
 ```
 
-Run helpers relative to this skill's directory. The preparation helper uses Python's
+Run helpers relative to this skill's directory (in Claude Code, `${CLAUDE_SKILL_DIR}`). The preparation helper uses Python's
 standard library. Inspect `source.png` when present, then read `evidence.json`.
 Avoid loading embedded base64 or thousands of redundant raw points into the
 conversation. Keep the original export available for local measurements. Do not
@@ -83,7 +83,13 @@ the original raster as a substitute for reconstructing requested vector regions.
 
 ## Compare and refine
 
-Render the candidate at the original dimensions using an available SVG renderer.
+Render the candidate at the original dimensions. If no renderer is already at hand,
+this helper uses whichever of cairosvg, rsvg-convert, Inkscape or Chrome is installed:
+
+```sh
+python scripts/render_svg.py candidate.svg rendered.png --width W --height H
+```
+
 Inspect a side-by-side view and overlay, then magnify lettering, holes, corners,
 caps and line/curve transitions. For colored work inspect region boundaries and
 colors as well as the outer silhouette.

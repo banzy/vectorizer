@@ -39,6 +39,55 @@ Create the destination folder if needed, then start a new Codex chat.
 
 </details>
 
+## Install for Claude
+
+The `vector-reconstruction` folder is already a standard Agent Skill (`SKILL.md`
+with `name` and `description` frontmatter), so Claude loads it without changes.
+Claude reads the description and activates the skill when you ask to rebuild or
+clean up a logo; you can also ask for it by name.
+
+### Claude Code
+
+With Node.js installed, run this single command:
+
+```sh
+npx -y skills add banzy/vectorizer --full-depth -a claude-code -g -y
+```
+
+Or install manually. For all your projects:
+
+```sh
+mkdir -p ~/.claude/skills
+cp -R vector-reconstruction ~/.claude/skills/
+```
+
+For one project only, copy the folder to `.claude/skills/` in that project's root
+and commit it so teammates get it too. Start a new Claude Code session afterward
+(or run `/skills` to confirm it is listed), then ask:
+
+> Use the vector-reconstruction skill to rebuild this logo from `logo.png` and
+> `logo-designer-brief.json`. Return an editable SVG and compare it to the original.
+
+Claude Code can run the helpers directly. `render_svg.py` needs one SVG renderer
+(for example `brew install librsvg`, `pip install cairosvg`, Inkscape or Chrome),
+and `compare_rasters.py` needs Pillow (`python3 -m pip install Pillow`).
+
+### Claude.ai and the Claude desktop app
+
+1. Zip the folder so `vector-reconstruction/` is the top level of the archive:
+
+   ```sh
+   zip -r vector-reconstruction.zip vector-reconstruction -x '*.DS_Store' '*__pycache__*'
+   ```
+
+2. Open **Settings → Capabilities** (or **Customize → Skills**), make sure code
+   execution and Skills are enabled, then upload `vector-reconstruction.zip`.
+3. Attach the logo (and the point export, if any) to a chat and ask Claude to use
+   the Vector Reconstruction skill.
+
+Skill availability depends on your plan. Team and Enterprise owners may need to
+enable Skills for the organization first.
+
 ## Use with another AI assistant
 
 Provide these files along with the original image:
@@ -91,10 +140,19 @@ This produces `evidence/evidence.json` and, when the export contains an embedded
 PNG, `evidence/source.png`. It removes redundant raw coordinates and base64 from
 the compact evidence while retaining the original export for local measurements.
 
+### Render an SVG to PNG
+
+Uses the first available renderer among cairosvg, `rsvg-convert`, Inkscape and
+Chrome/Chromium, and writes a transparent PNG at the exact size you give it:
+
+```sh
+python3 vector-reconstruction/scripts/render_svg.py candidate.svg rendered.png --width 800 --height 600
+```
+
 ### Compare a reconstruction
 
-Requires Python 3 and Pillow. Render the SVG separately to a PNG at the original
-image dimensions; the helper does not render SVG or resize the inputs.
+Requires Python 3 and Pillow. Render the SVG to a PNG at the original image
+dimensions first (see below); the helper does not render SVG or resize the inputs.
 
 ```sh
 python3 -m pip install Pillow
@@ -132,6 +190,7 @@ vector-reconstruction/
 ├── references/export-format.md
 └── scripts/
     ├── prepare_evidence.py
+    ├── render_svg.py
     └── compare_rasters.py
 ```
 
