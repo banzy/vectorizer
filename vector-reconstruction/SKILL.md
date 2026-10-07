@@ -106,25 +106,44 @@ If the user supplies an existing `logo-designer-brief` export, run
 they supply an existing SVG to clean up, run `scripts/inspect_svg.py` on it first (step 8)
 to see its problems, and still render it beside the source image.
 
-For lettering, wordmarks and any organic or rough-edged shapes, also fit a clean outline
-straight from the image. `extract_contours.py` traces pixel edges, so `trace.svg` follows
-every bump of a rough or low-resolution edge (hundreds of points for a few letters):
+Then build the designer's draft for every logo. `extract_contours.py` traces pixel edges,
+so `trace.svg` follows every bump of a rough or low-resolution edge (hundreds of points for
+a few letters) and never knows that an edge is a circle:
 
 ```sh
 python scripts/fit_curves.py logo.png --out fitted.svg
 ```
 
-It smooths edge noise, keeps real corners sharp, turns straight edges into exact lines
-(horizontal and vertical ones snapped to the axis), and fits few cubic Beziers with
-anchors at the horizontal and vertical extrema and handles aligned there. It prints the
-node count and the largest distance from the traced edge (about 1 px is normal; it warns
-above 2). Use `fitted.svg` as the starting geometry for lettering instead of `trace.svg`. It does
-not recognize geometric primitives (a rounded rectangle gets anchors mid-edge); rebuild
-circles, rectangles and arcs as native shapes as step 5 says.
-Tune it only when the render shows a problem: `--smooth` (rougher edges need more),
-`--tolerance` (fewer or more anchors), `--corner-angle` (a soft corner flattened or a
-curve turned into a corner) and `--line-ratio` (how much a long edge may bow and still
-become a line; raise to 0.015 for rough lettering, set 0 to keep every bow).
+It smooths edge noise, keeps real corners sharp, and rebuilds each edge as the simplest
+true primitive the measurements support:
+
+- Straight edges become exact lines; near-horizontal and near-vertical ones are snapped.
+- Circular edges become exact SVG arcs, and full circles get 4 arcs anchored at their
+  extremes. Arcs whose centres agree, across all shapes, get one exact shared centre.
+  Radii, and ring widths, that agree within the measurement noise become one value.
+  Straight ends that point at a shared centre become exactly radial.
+- An arc that runs into straight edges is made exactly tangent to them: a rounded corner,
+  or a round cap between parallel edges.
+- Everything else becomes a few cubic Beziers, anchored at the horizontal and vertical
+  extremes, with smooth joins made exactly smooth.
+
+Every rule is a test against the image's own measurements; nothing is assumed. A noisy arc
+only joins a shared centre when a clean arc confirms that centre, and ellipses and free
+curves stay curves.
+
+Read its summary, not the SVG. `geometry` lists the shared centres with their radii, the
+ring widths and the radial ends found. Treat these as construction evidence for step 4.
+`per_contour` gives the nodes, lines, arcs and curves of each shape, and how far each strays
+from the trace. A `note` names shapes it moved more than 2 px to make arcs exact. That is
+intended when the source edge is uneven: confirm it on the render. A `warning` names real
+problems, such as an outline straying from the trace or folding back on itself.
+
+Use `fitted.svg` as the starting geometry instead of `trace.svg`. Tune it only when the
+render shows a problem: `--smooth` (rougher edges need more), `--tolerance` (fewer or more
+anchors), `--corner-angle` (a soft corner flattened or a curve turned into a corner),
+`--line-ratio` (how much a long edge may bow and still become a line; raise to 0.015 for
+rough lettering, set 0 to keep every bow), and `--no-geometry` (switch off arc
+recognition when the evidence is wrong, then rebuild the geometry by hand).
 
 Do not load embedded base64 or thousands of raw points into the conversation, and do not
 silently truncate detailed regions to fit a context limit. Evidence priority: original
@@ -156,6 +175,12 @@ constraints supported by several measurements or clear visual intent:
 
 - Repeated widths, radii, centers, alignments, spacing and angles.
 - Circular versus noncircular runs, tangent transitions and intentional corners.
+- Construction as a designer draws it. Arcs that look concentric share one exact centre.
+  Parts of one ring use the same two radii, and rings that look equally thick share one
+  width. Cut ends of rings and arcs point at the centre. A rounded corner is an arc tangent
+  to both edges, and a round cap's radius is half the stroke. `fit_curves.py` reports the
+  centres, radii, widths and radial ends it found: check them against the image, and apply
+  the same rules to anything it missed.
 - Symmetry, asymmetry, overlaps, holes and other negative space.
 - Letter shapes, counters, terminals and optical adjustments that affect recognition.
 
@@ -173,8 +198,9 @@ still has dozens of near-coincident anchors or runs of tiny straight segments st
 for a curve has not been rebuilt.
 
 - True primitives for geometric parts: `rect` (with `rx`), `circle`, `ellipse`, polygons,
-  or exact SVG arcs with correct direction and large-arc flags. Share centers between
-  inner and outer arcs only when measurements agree.
+  or exact SVG arcs with correct direction and large-arc flags. Concentric arcs share one
+  exact centre (the same coordinates, not nearly the same) whenever the measurements agree.
+  Never leave Bezier approximations of arcs that should be concentric: they drift off-centre.
 - Centerline strokes with caps and joins for demonstrably uniform-width parts; filled
   outlines for variable-width silhouettes. Keep sharp joins sharp even next to rounded ends.
 - Cubic Beziers for organic or custom contours, with anchors at extrema, corners and
@@ -237,7 +263,9 @@ python scripts/render_svg.py inspection/wireframe.svg inspection/wireframe.png -
 `report.json` lists debris (specks, background shapes, fake knockouts, hidden geometry,
 and stacked duplicates: exact copies, offset or re-traced copies of the same object in
 any color, shapes fully or mostly hidden under later ones, repeated subpaths), path quality (almost-smooth joins, polylines standing in for curves,
-redundant and near-coincident anchors, lines slightly off-axis, wrong hole winding) and
+redundant and near-coincident anchors, lines slightly off-axis, wrong hole winding),
+construction (`near-concentric` arcs whose centres almost but not exactly match, and
+`near-equal-radius` arcs around one centre) and
 production issues (live strokes, open filled paths, clipping, text, gradients,
 near-duplicate colors). The wireframe shows anchors, handles and flagged points (red)
 over the faded source, with duplicate and hidden shapes outlined in dashed red. Fix real

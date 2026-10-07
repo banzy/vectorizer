@@ -485,6 +485,66 @@ def collect(root, rules):
     return shapes, notes
 
 
+def circle_through(points):
+    """Least-squares circle (centre, radius, worst residual) through sample points, or None."""
+    n = len(points)
+    sx = sum(x for x, _ in points); sy = sum(y for _, y in points)
+    mx, my = sx / n, sy / n
+    u = [(x - mx, y - my) for x, y in points]
+    suu = sum(a * a for a, _ in u); svv = sum(b * b for _, b in u); suv = sum(a * b for a, b in u)
+    suuu = sum(a ** 3 for a, _ in u); svvv = sum(b ** 3 for _, b in u)
+    suvv = sum(a * b * b for a, b in u); svuu = sum(b * a * a for a, b in u)
+    det = suu * svv - suv * suv
+    if abs(det) < 1e-12:
+        return None
+    rhs1, rhs2 = (suuu + suvv) / 2, (svvv + svuu) / 2
+    uc, vc = (rhs1 * svv - rhs2 * suv) / det, (suu * rhs2 - suv * rhs1) / det
+    cx, cy = uc + mx, vc + my
+    radius = math.sqrt(uc * uc + vc * vc + (suu + svv) / n)
+    worst = max(abs(math.dist(p, (cx, cy)) - radius) for p in points)
+    return (cx, cy), radius, worst
+
+
+def construction(records, size, add):
+    """Arcs that almost, but not exactly, share a centre or a radius: a designer gives them one exact value."""
+    arcs = []
+    for record in records:
+        for subpath in record["_subpaths"]:
+            for seg in subpath["segments"]:
+                samples = seg.get("samples") or []
+                if seg["type"] not in ("A", "C") or len(samples) < 5:
+                    continue
+                fit = circle_through(samples)
+                if fit is None:
+                    continue
+                center, radius, worst = fit
+                if radius < size * 0.005 or radius > size * 4 or worst > max(0.05, 0.002 * radius):
+                    continue                      # not a circular arc (or too small to matter)
+                a0 = math.atan2(samples[0][1] - center[1], samples[0][0] - center[0])
+                a1 = math.atan2(samples[-1][1] - center[1], samples[-1][0] - center[0])
+                sweep = abs((a1 - a0 + math.pi) % (2 * math.pi) - math.pi)
+                if seg["type"] == "C" and sweep < math.radians(20):
+                    continue
+                arcs.append((record["id"], center, radius, seg["p0"]))
+    reported = set()
+    for i, (name, c1, r1, at) in enumerate(arcs):
+        for j in range(i + 1, len(arcs)):
+            _, c2, r2, _ = arcs[j]
+            gap = math.dist(c1, c2)
+            if 0.1 < gap <= max(1.0, 0.02 * min(r1, r2)):      # below 0.1 px is coordinate rounding
+                key = ("centre", round(c1[0]), round(c1[1]))
+                if key not in reported:
+                    reported.add(key)
+                    add("near-concentric", f"Arcs almost share a centre ({gap:.2f} px apart): give them one "
+                                           "exact centre.", name, at)
+            elif gap <= 0.1 and 0.05 < abs(r1 - r2) <= max(0.5, 0.004 * max(r1, r2)):
+                key = ("radius", round(min(r1, r2), 1))
+                if key not in reported:
+                    reported.add(key)
+                    add("near-equal-radius", f"Concentric arcs with radii {r1:.2f} and {r2:.2f}: make them one "
+                                             "radius, or separate them clearly.", name, at)
+
+
 def inspect(svg_path, target, background, min_feature):
     tree = ET.parse(svg_path)
     root = tree.getroot()
@@ -649,6 +709,7 @@ def inspect(svg_path, target, background, min_feature):
                                     length(style.get("fill-opacity"), 1) >= 1)})
 
     stacking(records, view, add)
+    construction(records, size, add)
 
     palette = sorted(c for c in colors if rgb(c))
     for i, a in enumerate(palette):
