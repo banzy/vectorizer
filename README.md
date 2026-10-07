@@ -35,13 +35,16 @@ Attach the logo and ask:
 
 > Use the vector-reconstruction skill to vectorize this logo.
 
-That is all it needs. You get a clean, editable SVG that works for any use, a preview
-and a short account of what was rebuilt and checked. It asks no questions unless the
-image is unusable.
+That is all it needs. It works out the details itself and replies with a single link that
+downloads the finished, editable SVG. No questions, no report.
 
-Optional, only if it matters to you: name the use (web, print, cutting, embroidery,
-animation) so it can tune the simplification, or name anything that must stay exactly
-as is, such as a color value or a letter shape.
+- **It takes a few minutes.** The quality comes from the full workflow (trace, rebuild,
+  remove duplicates, check at small sizes), so let it finish.
+- **Use a strong model.** Tested with Sonnet 5.5; use that or better. Smaller, faster
+  models (Haiku-class) will likely give rougher geometry, and the model must be able to
+  see images. The skill tells you in one line if it thinks the model is under-powered.
+- Optional: name the use (web, print, cutting, embroidery, animation) or anything that
+  must stay exactly as is, such as a color value or a letter shape.
 
 ## Use it on any other platform
 
@@ -54,8 +57,7 @@ Any AI chat that accepts image uploads can follow the skill, even without a skil
 3. Send:
 
 > Follow the attached Vector Reconstruction instructions and vectorize the uploaded logo.
-> Return a standalone SVG. Then say which checks you actually ran and which you could
-> not run.
+> Give me the finished SVG as a downloadable file or link.
 
 What to expect:
 
@@ -65,7 +67,7 @@ What to expect:
 - **Without code execution**: the assistant works from looking at the image. It can
   still follow the design method, but it cannot measure overlap or render checks, so
   open the SVG yourself at several sizes (including 16–32 px) and compare it with the
-  original.
+  original. The result is returned as SVG code to save as a `.svg` file.
 - Chat assistants can produce a plausible but imperfect result. Review the output, and
   ask for another pass on any part that drifted.
 
@@ -93,11 +95,13 @@ python3 vector-reconstruction/scripts/render_svg.py candidate.svg rendered.png -
 python3 vector-reconstruction/scripts/compare_rasters.py evidence/source.png rendered.png --out comparison
 python3 vector-reconstruction/scripts/inspect_svg.py candidate.svg --out inspection --target web
 python3 vector-reconstruction/scripts/render_svg.py candidate.svg sizes.png --sizes 16 24 32 48 64
+python3 vector-reconstruction/scripts/download_page.py logo.svg --name Acme --out download.html
 ```
 
 They trace the image, render the SVG, measure overlap, audit it (duplicates, hidden
 shapes, bad joins, open paths, live strokes; wireframe included) and make a small-size
-legibility sheet. Use `--help` on any script. `prepare_evidence.py` is only needed if
+legibility sheet. `download_page.py` builds the one-button download page that the skill
+publishes as an Artifact in Claude's apps. Use `--help` on any script. `prepare_evidence.py` is only needed if
 you already have a `logo-designer-brief` JSON export from the web app.
 
 ## Repository

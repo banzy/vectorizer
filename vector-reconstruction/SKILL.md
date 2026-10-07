@@ -13,6 +13,20 @@ geometry and editability together: the goal is the fewest intentional points tha
 express the design, not the lowest possible count. Adapt the method to the artwork; no
 single primitive or stroke width is a default for every logo.
 
+## Before you start
+
+- **Can you do this?** The skill needs image input and strong multi-step geometric
+  reasoning; it was developed and tested with Sonnet 5.5-class models. If you cannot
+  view the attached image, say so in one line and stop. If you are a small or fast model
+  (Haiku-class or similar), say once, in one line, that this task is demanding, works best
+  with Sonnet 5.5 or a stronger model, and the result may be rougher here; then continue
+  with the full workflow. Say nothing about this otherwise.
+- **Set expectations.** Say once, in one line, that rebuilding takes a few minutes and
+  you will send a download link when done. The quality comes from the full workflow:
+  take the time it needs and do not skip steps to be faster.
+- Keep all working files (evidence, drafts, renders) in a scratch or temporary folder,
+  not in the user's folders. Only the final SVG is delivered.
+
 Run helpers relative to this skill's directory (in Claude Code, `${CLAUDE_SKILL_DIR}`).
 They need Python 3; `extract_contours.py`, `compare_rasters.py` and `render_svg.py --sizes`
 also need Pillow, and `render_svg.py` needs an installed SVG renderer.
@@ -20,8 +34,7 @@ also need Pillow, and `render_svg.py` needs an installed SVG renderer.
 ## 1. Brief: decide what must survive
 
 Most requests are just "vectorize this logo". Do not ask questions, and do not ask what
-it will be used for: assume a general-purpose brand master, state that assumption in
-one line when you deliver, and start. Ask only if the image is unusable (not a logo,
+it will be used for: assume a general-purpose brand master and start. Ask only if the image is unusable (not a logo,
 unreadable, or several unrelated logos with no way to tell which is wanted).
 
 Work out for yourself:
@@ -33,8 +46,7 @@ Work out for yourself:
   whether strokes may stay live and which checks matter. Read
   [references/production-targets.md](references/production-targets.md).
 - **Deliverables**: one master SVG by default. Offer one-color, reversed or small-size
-  variants in a closing line only if validation showed a real need (for example the mark
-  fails at 16-32 px or is invisible on dark); do not produce them unasked.
+  variants only if the user asks; never produce them unasked.
 
 ## 2. Read the evidence
 
@@ -194,13 +206,38 @@ checks, overlap figures or font identification you did not actually perform.
 
 ## 9. Deliver
 
-- The master SVG (or complete SVG code if file creation is unavailable) and a rendered
-  preview. Add requested variants (one-color, reversed, small-size) as separate named files.
-- A concise account: components and inferred constraints; debris removed; elements
-  rebuilt as primitives, arcs or redrawn letterforms; palette decisions; validation
-  actually performed (overlap, inspection findings fixed or accepted, smallest size that
-  works); and remaining uncertainty. Report complexity by meaningful structure
-  (primitives, outline anchors, centerline endpoints), not just a lower node count.
+The user wants the vector, not a report. Your final reply is only a short line and one
+clickable link that downloads the finished SVG, for example:
 
-Without scripts or rendering, follow the same workflow, return SVG, and state clearly
-which checks remain unverified.
+> Your vector is ready: [Download acme-logo.svg](link)
+
+Do not describe how it was built, which checks you ran, what was not verified, which
+assumptions you made, caveats, or alternatives. Put none of that in the reply, even as a
+brief list. Do not offer variants. The single exception: if part of the source could not
+be vectorized at all (for example a photograph inside the logo), say so in one sentence.
+
+Deliver the master SVG (the final, validated file, named after the logo, e.g.
+`acme-logo.svg`) in the first way that applies on your platform:
+
+1. **Artifact tool available** (Claude desktop app, Claude Code app, claude.ai): artifact
+   pages cannot start plain download links, so build a one-button download page and
+   publish it. The link you reply with is the artifact's URL.
+
+   ```sh
+   python scripts/download_page.py acme-logo.svg --name "Acme" --out download.html
+   ```
+
+   Publish `download.html` with the Artifact tool, passing `capabilities` as
+   `{"downloads": true}` and a short `description`. The page shows a preview on light,
+   dark and transparent backgrounds and a Download SVG button; the viewer confirms the
+   save. Follow the Artifact tool's own requirements when publishing.
+2. **Platform that returns files to the user** (code-execution sandboxes such as ChatGPT
+   or Claude with code execution): save the SVG to the platform's downloadable-output
+   location and reply with the link or attachment it gives you.
+3. **Coding agent working in the user's files** (Codex, Claude Code in a terminal): save
+   the SVG in the working folder and reply with a clickable path link to it.
+4. **No file or link possible**: reply with the complete SVG in one code block labelled
+   with its file name.
+
+Validation is for you: fix what it finds before delivering, and never report it.
+Without scripts or rendering, follow the same workflow carefully by eye and return the SVG.
