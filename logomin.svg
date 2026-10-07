@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="304" height="200" viewBox="0 0 304 200">
-  <g fill="none" stroke="#081F47" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
-    <path id="open-clock-outline" d="M20 31H202A69 69 0 1 1 141 132H104"/>
-    <path id="upper-bar" d="M49 65H137"/>
-    <path id="lower-bar" d="M78 99H125"/>
-    <path id="clock-hands" d="M201 58V101L220 120"/>
-  </g>
-</svg>
