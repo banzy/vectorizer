@@ -6,7 +6,9 @@ shapes, recovers the real geometry (circles, arcs, true curves, redrawn letters)
 colors to a clean palette and checks the result at real sizes.
 
 **All it needs is the logo image.** It creates its own contour evidence from the image.
-You can also give it an existing SVG to clean up.
+You can also give it an existing SVG to clean up. Detailed drawings and illustrations
+(pencil, ink, blueprint, sketches) are accepted too: they are vectorized automatically as
+tonal layers of one ink color, which is good rather than perfect.
 
 ## Install
 
@@ -84,7 +86,7 @@ What to expect:
 
 ## Optional helper scripts
 
-Python 3. `extract_contours.py`, `compare_rasters.py` and `render_svg.py --sizes` also
+Python 3. `extract_contours.py`, `trace_lineart.py`, `compare_rasters.py` and `render_svg.py --sizes` also
 need Pillow (`python3 -m pip install Pillow`). `render_svg.py` needs one SVG renderer
 (`rsvg-convert`, cairosvg, Inkscape or Chrome). `inspect_svg.py` needs nothing extra.
 The skill runs these itself when it can:
@@ -93,6 +95,7 @@ The skill runs these itself when it can:
 python3 vector-reconstruction/scripts/extract_contours.py logo.png --out evidence
 python3 vector-reconstruction/scripts/render_svg.py candidate.svg rendered.png --width W --height H
 python3 vector-reconstruction/scripts/compare_rasters.py evidence/source.png rendered.png --out comparison
+python3 vector-reconstruction/scripts/trace_lineart.py drawing.png --out drawing.svg
 python3 vector-reconstruction/scripts/inspect_svg.py candidate.svg --out inspection --target web
 python3 vector-reconstruction/scripts/render_svg.py candidate.svg sizes.png --sizes 16 24 32 48 64
 python3 vector-reconstruction/scripts/download_page.py logo.svg --name Acme --out download.html

@@ -98,8 +98,10 @@ def prepare(export_path, output_dir):
         compact["image"]["attachment_required"] = "Use the separately supplied original image."
     compact["contours"] = []
     for contour in contours:
-        record = {key: value for key, value in contour.items()
-                  if key not in ("raw_pixel_center_points_px", "normalized_boundary")}
+        drop = ["raw_pixel_center_points_px", "normalized_boundary"]
+        if package.get("producer") == "extract_contours.py":
+            drop.append("current_geometry")  # only a polyline copy of boundary_points_px; see trace.svg
+        record = {key: value for key, value in contour.items() if key not in drop}
         if "raw_pixel_center_points_px" in contour:
             record["raw_point_count"] = len(contour["raw_pixel_center_points_px"])
         compact["contours"].append(record)

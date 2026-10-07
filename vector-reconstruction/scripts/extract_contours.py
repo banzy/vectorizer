@@ -323,8 +323,9 @@ def build(image_path, output_dir, threshold, tolerance, min_area, background, mo
         background = tuple(background) if background else border_color(rgb)
     inks, background_entry, sampled = core_palette(image, rgb, alpha, transparent, background)
     if not inks:
-        raise ValueError("The image has no foreground color that differs from its background. "
-                         "Use --background if the background color was misdetected.")
+        raise ValueError("No flat foreground colors were found. If this is a pencil, ink, blueprint or other "
+                         "detailed line drawing or illustration, run scripts/trace_lineart.py instead. "
+                         "Otherwise use --background if the background color was misdetected.")
     palette_colors = [color for color, _ in inks] + ([] if transparent else [background_entry[0]])
     fields, unexplained = membership_fields(rgb, alpha, transparent, palette_colors)
     if mode == "auto":
@@ -377,7 +378,12 @@ def build(image_path, output_dir, threshold, tolerance, min_area, background, mo
     export.write_text(json.dumps(package) + "\n", encoding="utf-8")
     (output_dir / "trace.svg").write_text(package["current_svg"] + "\n", encoding="utf-8")
     summary = prepare(export, output_dir)
+    evidence_bytes = (output_dir / "evidence.json").stat().st_size
+    complex_image = len(records) > 300 or evidence_bytes > 200_000
     summary.update(export_file=str(export), trace_svg=str(output_dir / "trace.svg"), mode=mode,
+                   evidence_bytes=evidence_bytes,
+                   **({"warning": "Too detailed to be a logo. Do not read evidence.json or rebuild by hand: "
+                                  "run scripts/trace_lineart.py on the image instead."} if complex_image else {}),
                    core_palette=[f'{entry["hex"]} {entry["role"]} {entry["share"]:.1%}' for entry in core],
                    outer_contours=sum(r["role"] == "outer" for r in records),
                    hole_contours=sum(r["role"] == "hole" for r in records),

@@ -1,6 +1,6 @@
 ---
 name: vector-reconstruction
-description: Rebuild existing logos from raster images, auto-traced SVGs, or logo-designer-brief point exports as clean, editable, production-ready SVG, working like a senior identity designer. Removes tracing debris, recovers true geometry, normalizes brand colors, organizes the file and validates it at real sizes. Use for vectorizing or cleaning up an existing logo; not for inventing a new identity.
+description: Rebuild existing logos from raster images, auto-traced SVGs, or logo-designer-brief point exports as clean, editable, production-ready SVG, working like a senior identity designer. Removes tracing debris, recovers true geometry, normalizes brand colors, organizes the file and validates it at real sizes. Also vectorizes detailed line art and illustrations (pencil, ink, blueprint, sketches) automatically. Use for vectorizing or cleaning up an existing logo or drawing; not for inventing a new identity.
 ---
 
 # Vector Reconstruction
@@ -26,6 +26,34 @@ single primitive or stroke width is a default for every logo.
   take the time it needs and do not skip steps to be faster.
 - Keep all working files (evidence, drafts, renders) in a scratch or temporary folder,
   not in the user's folders. Only the final SVG is delivered.
+- **Protect your context.** Never print or read a large JSON or SVG (over about 50 KB)
+  into the conversation, and never hand-write more than a few hundred path nodes. Read
+  script summaries, view rendered PNGs, and let scripts produce bulk geometry.
+
+## Triage: logo or detailed drawing?
+
+Look at the image first.
+
+- **A logo or mark** (flat colors, clean shapes, lettering, up to a few dozen distinct
+  shapes): follow steps 1-9 below.
+- **A detailed drawing or illustration** (pencil, ink, engraving, blueprint or sketch
+  line art, many hundreds of strokes, tonal variation, paper texture, a scene or
+  architecture): it cannot be rebuilt by hand, and the logo pipeline finds no flat
+  colors in it. Use the line-art route. Good, not perfect, is the bar here.
+
+```sh
+python scripts/trace_lineart.py drawing.png --out drawing.svg
+```
+
+It removes the paper tone and texture, detects the ink color and traces four tonal layers
+of the ink as smooth curves, in seconds. Then render it over the paper color and look at
+it beside the original once (`render_svg.py`, then view both PNGs, whole image and one
+or two zoomed areas). If lines look too faint raise `--boost` (e.g. 1.6); if the image
+looks noisy lower it or raise `--min-area`. If the SVG is over about 5 MB use `--tiers 3`
+or `--tolerance 0.7`. Add `--paper` to include the paper color as a background. Skip
+steps 3 to 8 (no debris triage, primitives or `inspect_svg.py`; its stacked tonal layers
+are intentional) and deliver as in step 9. If `extract_contours.py` ever prints a
+"too detailed" warning, switch to this route.
 
 Run helpers relative to this skill's directory (in Claude Code, `${CLAUDE_SKILL_DIR}`).
 They need Python 3; `extract_contours.py`, `compare_rasters.py` and `render_svg.py --sizes`
