@@ -19,17 +19,22 @@ also need Pillow, and `render_svg.py` needs an installed SVG renderer.
 
 ## 1. Brief: decide what must survive
 
-Before touching paths, establish:
+Most requests are just "vectorize this logo". Do not ask questions, and do not ask what
+it will be used for: assume a general-purpose brand master, state that assumption in
+one line when you deliver, and start. Ask only if the image is unusable (not a logo,
+unreadable, or several unrelated logos with no way to tell which is wanted).
+
+Work out for yourself:
 
 - **What to preserve**: silhouette, letterforms, brand colors, line weights, distinctive
   quirks. When unsure whether a feature is intentional, preserve it.
-- **Output target**: general brand master, web, print, cutting, embroidery or animation.
-  This sets how aggressively to simplify, whether strokes may stay live and which checks
-  matter. Read [references/production-targets.md](references/production-targets.md).
-  Ask only if the user's intent is unclear and the choice would change the result;
-  otherwise assume `general` and say so.
-- **Deliverables**: master SVG by default; color variants or a small-size version only
-  when asked or when validation shows they are needed.
+- **Output target**: use `general` unless the user names a use (web, print, cutting,
+  embroidery, animation); then apply that target. It sets how aggressively to simplify,
+  whether strokes may stay live and which checks matter. Read
+  [references/production-targets.md](references/production-targets.md).
+- **Deliverables**: one master SVG by default. Offer one-color, reversed or small-size
+  variants in a closing line only if validation showed a real need (for example the mark
+  fails at 16-32 px or is invisible on dark); do not produce them unasked.
 
 ## 2. Read the evidence
 

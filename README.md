@@ -33,12 +33,15 @@ Download this repo (**Code → Download ZIP**) and copy the `vector-reconstructi
 
 Attach the logo and ask:
 
-> Use the vector-reconstruction skill to rebuild this logo as an editable SVG and compare
-> it with the original. It is for web use.
+> Use the vector-reconstruction skill to vectorize this logo.
 
-Say how the logo will be used (web, print, cutting, embroidery, animation) and anything
-that must stay exactly as is. You get the SVG, a preview and a short account of what was
-rebuilt, what was checked and what is uncertain.
+That is all it needs. You get a clean, editable SVG that works for any use, a preview
+and a short account of what was rebuilt and checked. It asks no questions unless the
+image is unusable.
+
+Optional, only if it matters to you: name the use (web, print, cutting, embroidery,
+animation) so it can tune the simplification, or name anything that must stay exactly
+as is, such as a color value or a letter shape.
 
 ## Use it on any other platform
 
@@ -50,11 +53,9 @@ Any AI chat that accepts image uploads can follow the skill, even without a skil
    if you can attach a second file).
 3. Send:
 
-> Follow the attached Vector Reconstruction instructions. Rebuild the uploaded logo as a
-> standalone, editable SVG that keeps its viewBox and proportions. Draw every object
-> once, use real circles/arcs/curves, use real holes instead of white shapes, and
-> redraw lettering as outlines. Then say which checks you actually ran and which you
-> could not run.
+> Follow the attached Vector Reconstruction instructions and vectorize the uploaded logo.
+> Return a standalone SVG. Then say which checks you actually ran and which you could
+> not run.
 
 What to expect:
 
