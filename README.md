@@ -1,204 +1,113 @@
 # Vector Reconstruction
 
-A reusable AI skill for rebuilding existing logos as clean, editable SVGs. It
-guides the model to infer the intended design construction: shared stroke widths,
-circular arcs, rounded ends, alignment, custom curves and meaningful corners.
+An AI skill that rebuilds an existing logo as a clean, editable SVG, the way a senior
+designer would: it treats auto-tracing as a rough draft, removes debris and duplicate
+shapes, recovers the real geometry (circles, arcs, true curves, redrawn letters), snaps
+colors to a clean palette and checks the result at real sizes.
 
-Use it with an original logo image, an existing SVG, or a `logo-designer-brief`
-point export. The goal is to preserve the existing identity while recovering
-useful geometry and removing unnecessary tracing artifacts.
+**All it needs is the logo image.** It creates its own contour evidence from the image.
+You can also give it an existing SVG to clean up.
 
-## Install in Codex
+## Install
 
-With Node.js installed, run this single command:
+**Codex or Claude Code** (needs Node.js; run it once, then start a new chat or session):
 
 ```sh
 npx -y skills add banzy/vectorizer --full-depth -a codex -g -y
-```
-
-This uses the [Skills CLI](https://github.com/vercel-labs/skills) to install the
-skill for Codex across your projects. Start a new Codex chat after installation.
-The command downloads the version published on GitHub.
-
-Attach the source image and any available point export, then invoke the skill:
-
-> Use $vector-reconstruction to rebuild this logo from the attached image and point
-> export. Preserve its appearance, infer meaningful geometry and return an editable
-> SVG with a comparison to the original.
-
-A point export is optional. The skill also supports reconstruction directly from
-an image or refinement of an existing SVG.
-
-<details>
-<summary>Manual installation without Node.js</summary>
-
-Download this repository using GitHub's **Code → Download ZIP**, extract it,
-and copy the `vector-reconstruction` folder into `~/.codex/skills/`. If you use a
-custom `CODEX_HOME`, copy it into that directory's `skills` folder instead.
-Create the destination folder if needed, then start a new Codex chat.
-
-</details>
-
-## Install for Claude
-
-The `vector-reconstruction` folder is already a standard Agent Skill (`SKILL.md`
-with `name` and `description` frontmatter), so Claude loads it without changes.
-Claude reads the description and activates the skill when you ask to rebuild or
-clean up a logo; you can also ask for it by name.
-
-### Claude Code
-
-With Node.js installed, run this single command:
-
-```sh
 npx -y skills add banzy/vectorizer --full-depth -a claude-code -g -y
 ```
 
-Or install manually. For all your projects:
+<details>
+<summary>Manual install</summary>
+
+Download this repo (**Code → Download ZIP**) and copy the `vector-reconstruction` folder to:
+
+- Claude Code: `~/.claude/skills/` (all projects) or `.claude/skills/` (one project)
+- Codex: `~/.codex/skills/`
+- Claude.ai / Claude desktop: zip the folder so `vector-reconstruction/` is at the top
+  level, then upload it in **Settings → Capabilities → Skills**.
+
+</details>
+
+## Use it
+
+Attach the logo and ask:
+
+> Use the vector-reconstruction skill to rebuild this logo as an editable SVG and compare
+> it with the original. It is for web use.
+
+Say how the logo will be used (web, print, cutting, embroidery, animation) and anything
+that must stay exactly as is. You get the SVG, a preview and a short account of what was
+rebuilt, what was checked and what is uncertain.
+
+## Use it on any other platform
+
+Any AI chat that accepts image uploads can follow the skill, even without a skill loader.
+
+1. Upload the logo image.
+2. Upload or paste [`vector-reconstruction/SKILL.md`](vector-reconstruction/SKILL.md) as
+   the instructions (add [`production-targets.md`](vector-reconstruction/references/production-targets.md)
+   if you can attach a second file).
+3. Send:
+
+> Follow the attached Vector Reconstruction instructions. Rebuild the uploaded logo as a
+> standalone, editable SVG that keeps its viewBox and proportions. Draw every object
+> once, use real circles/arcs/curves, use real holes instead of white shapes, and
+> redraw lettering as outlines. Then say which checks you actually ran and which you
+> could not run.
+
+What to expect:
+
+- **With code execution** (e.g. ChatGPT with data analysis, Claude with code execution):
+  also upload the `scripts` folder. The assistant can then trace the image, render and
+  compare the result and audit the SVG, as described below.
+- **Without code execution**: the assistant works from looking at the image. It can
+  still follow the design method, but it cannot measure overlap or render checks, so
+  open the SVG yourself at several sizes (including 16–32 px) and compare it with the
+  original.
+- Chat assistants can produce a plausible but imperfect result. Review the output, and
+  ask for another pass on any part that drifted.
+
+## What it does
+
+1. Decides what must be preserved and the output target.
+2. Traces the image into per-color contours and a core palette.
+3. Removes debris: background rectangles, specks, fake white knockouts, stacked
+   duplicates and hidden shapes.
+4. Infers construction: repeated widths, radii, alignment, symmetry.
+5. Rebuilds with true primitives, arcs and deliberate Béziers; redraws lettering.
+6. Simplifies without changing the character, then organizes colors, holes and groups.
+7. Validates against the source, in outline mode and at small sizes.
+
+## Optional helper scripts
+
+Python 3. `extract_contours.py`, `compare_rasters.py` and `render_svg.py --sizes` also
+need Pillow (`python3 -m pip install Pillow`). `render_svg.py` needs one SVG renderer
+(`rsvg-convert`, cairosvg, Inkscape or Chrome). `inspect_svg.py` needs nothing extra.
+The skill runs these itself when it can:
 
 ```sh
-mkdir -p ~/.claude/skills
-cp -R vector-reconstruction ~/.claude/skills/
+python3 vector-reconstruction/scripts/extract_contours.py logo.png --out evidence
+python3 vector-reconstruction/scripts/render_svg.py candidate.svg rendered.png --width W --height H
+python3 vector-reconstruction/scripts/compare_rasters.py evidence/source.png rendered.png --out comparison
+python3 vector-reconstruction/scripts/inspect_svg.py candidate.svg --out inspection --target web
+python3 vector-reconstruction/scripts/render_svg.py candidate.svg sizes.png --sizes 16 24 32 48 64
 ```
 
-For one project only, copy the folder to `.claude/skills/` in that project's root
-and commit it so teammates get it too. Start a new Claude Code session afterward
-(or run `/skills` to confirm it is listed), then ask:
+They trace the image, render the SVG, measure overlap, audit it (duplicates, hidden
+shapes, bad joins, open paths, live strokes; wireframe included) and make a small-size
+legibility sheet. Use `--help` on any script. `prepare_evidence.py` is only needed if
+you already have a `logo-designer-brief` JSON export from the web app.
 
-> Use the vector-reconstruction skill to rebuild this logo from `logo.png` and
-> `logo-designer-brief.json`. Return an editable SVG and compare it to the original.
-
-Claude Code can run the helpers directly. `render_svg.py` needs one SVG renderer
-(for example `brew install librsvg`, `pip install cairosvg`, Inkscape or Chrome),
-and `compare_rasters.py` needs Pillow (`python3 -m pip install Pillow`).
-
-### Claude.ai and the Claude desktop app
-
-1. Zip the folder so `vector-reconstruction/` is the top level of the archive:
-
-   ```sh
-   zip -r vector-reconstruction.zip vector-reconstruction -x '*.DS_Store' '*__pycache__*'
-   ```
-
-2. Open **Settings → Capabilities** (or **Customize → Skills**), make sure code
-   execution and Skills are enabled, then upload `vector-reconstruction.zip`.
-3. Attach the logo (and the point export, if any) to a chat and ask Claude to use
-   the Vector Reconstruction skill.
-
-Skill availability depends on your plan. Team and Enterprise owners may need to
-enable Skills for the organization first.
-
-## Use with another AI assistant
-
-Provide these files along with the original image:
-
-- [`vector-reconstruction/SKILL.md`](vector-reconstruction/SKILL.md): the reconstruction instructions.
-- Your point export or existing SVG, if available.
-- [`vector-reconstruction/references/export-format.md`](vector-reconstruction/references/export-format.md)
-  when supplying a `logo-designer-brief` JSON export.
-
-Then ask:
-
-> Follow the attached Vector Reconstruction skill. Examine the original logo and
-> any supplied geometry, infer its intended construction, and return a standalone,
-> editable SVG. Explain the construction choices and identify any checks you
-> could not perform.
-
-An assistant without a skill loader can use the file as task instructions. This
-does not install a native skill in that system. Attach the image separately unless
-the assistant can extract and view the embedded PNG; reading base64 text alone
-does not provide visual inspection.
-
-## What the skill does
-
-1. Inspects the source and separates visual components, colors and negative space.
-2. Infers supported constraints such as repeated widths, shared centers, symmetry,
-   alignments and tangent transitions.
-3. Rebuilds suitable parts with native shapes, centerline strokes or circular arcs,
-   and uses fitted curves for custom outlines and lettering.
-4. Preserves distinctive details rather than enforcing one geometric model on
-   every region.
-5. Renders and compares the SVG when tools are available, then refines regions
-   that lose fidelity.
-
-The intended output is an SVG file, a preview when possible, and a brief account
-of the inferred design constraints, actual validation and remaining uncertainty.
-
-## Optional helpers
-
-Run these commands from the repository root. Helpers do not call an AI service.
-
-### Extract an image and compact point evidence
-
-Requires Python 3's standard library:
-
-```sh
-python3 vector-reconstruction/scripts/prepare_evidence.py logo-designer-brief.json --out evidence
-```
-
-This produces `evidence/evidence.json` and, when the export contains an embedded
-PNG, `evidence/source.png`. It removes redundant raw coordinates and base64 from
-the compact evidence while retaining the original export for local measurements.
-
-### Render an SVG to PNG
-
-Uses the first available renderer among cairosvg, `rsvg-convert`, Inkscape and
-Chrome/Chromium, and writes a transparent PNG at the exact size you give it:
-
-```sh
-python3 vector-reconstruction/scripts/render_svg.py candidate.svg rendered.png --width 800 --height 600
-```
-
-### Compare a reconstruction
-
-Requires Python 3 and Pillow. Render the SVG to a PNG at the original image
-dimensions first (see below); the helper does not render SVG or resize the inputs.
-
-```sh
-python3 -m pip install Pillow
-python3 vector-reconstruction/scripts/compare_rasters.py original.png rendered.png --out comparison
-```
-
-The output includes `comparison/comparison.png` and `comparison/metrics.json`.
-For transparent images, it measures foreground overlap using alpha masks. It also
-reports color differences over white and black backgrounds.
-
-For an image with a known opaque background:
-
-```sh
-python3 vector-reconstruction/scripts/compare_rasters.py original.png rendered.png --background '#ffffff' --out comparison
-```
-
-To examine a small detail independently:
-
-```sh
-python3 vector-reconstruction/scripts/compare_rasters.py original.png rendered.png --crop 20 30 80 60 --out detail-comparison
-```
-
-Use `--help` for mask thresholds and other arguments. Whole-image overlap can hide
-damage to a small letter, counter or hole; inspect those features visually and
-with local crops. In a chat without file execution or rendering, numerical and
-raster validation remain unverified.
-
-## Repository contents
+## Repository
 
 ```text
-README.md
 vector-reconstruction/
-├── SKILL.md
-├── agents/openai.yaml
-├── references/export-format.md
-└── scripts/
-    ├── prepare_evidence.py
-    ├── render_svg.py
-    └── compare_rasters.py
+├── SKILL.md                      instructions
+├── agents/openai.yaml            Codex metadata
+├── references/                   export format, production targets
+└── scripts/                      the helpers above
 ```
 
-## Sharing
-
-Share this repository or the complete `vector-reconstruction` folder. Preserve the
-folder structure so its references and helpers remain accessible. Source logos,
-point exports and generated reconstructions are separate inputs and outputs;
-they are not bundled with the skill.
-
-The skill contains no API keys, hosted service or project-specific runtime paths.
+No API keys, hosted service or logos are bundled. Source images and generated SVGs are
+your inputs and outputs.

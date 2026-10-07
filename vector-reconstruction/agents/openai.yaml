@@ -1,4 +1,4 @@
 interface:
   display_name: "Vector Reconstruction"
   short_description: "Rebuild logos as clean, editable vector geometry"
-  default_prompt: "Use $vector-reconstruction to reconstruct the attached logo and point export as an editable SVG, preserving its design and checking the result against the source."
+  default_prompt: "Use $vector-reconstruction to reconstruct the attached logo image as an editable SVG, generating the contour evidence itself, preserving its design and checking the result against the source."
