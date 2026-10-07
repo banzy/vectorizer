@@ -312,9 +312,9 @@ def contour_records(field, threshold, tolerance, min_area, first_id, color):
     return records, " ".join(paths), specks, first_id + len(contours)
 
 
-def build(image_path, output_dir, threshold, tolerance, min_area, background, mode):
+def prepare_layers(image_path, background, mode):
+    """Find the core palette and return (layers, context): layers are (hex, field) pairs ready to trace."""
     image = ImageOps.exif_transpose(Image.open(image_path)).convert("RGBA")
-    width, height = image.size
     alpha = image.getchannel("A")
     transparent = background is None and alpha.getextrema()[0] < 250
     rgb = Image.new("RGB", image.size, "white")
@@ -335,6 +335,17 @@ def build(image_path, output_dir, threshold, tolerance, min_area, background, mo
         layers = [(hex_color(inks[0][0]), silhouette)]
     else:
         layers = [(hex_color(color), fields[index]) for index, (color, _) in enumerate(inks)]
+    context = {"image": image, "transparent": transparent, "background": background, "inks": inks,
+               "background_entry": background_entry, "sampled": sampled, "unexplained": unexplained, "mode": mode}
+    return layers, context
+
+
+def build(image_path, output_dir, threshold, tolerance, min_area, background, mode):
+    layers, context = prepare_layers(image_path, background, mode)
+    image, transparent, inks = context["image"], context["transparent"], context["inks"]
+    background_entry, sampled, unexplained, mode = (context["background_entry"], context["sampled"],
+                                                    context["unexplained"], context["mode"])
+    width, height = image.size
     records, svg_paths, specks, next_id = [], [], 0, 0
     for color, field in layers:
         layer_records, d, layer_specks, next_id = contour_records(

@@ -87,12 +87,13 @@ What to expect:
 ## Optional helper scripts
 
 Python 3. `extract_contours.py`, `trace_lineart.py`, `compare_rasters.py` and `render_svg.py --sizes` also
-need Pillow (`python3 -m pip install Pillow`). `render_svg.py` needs one SVG renderer
+need Pillow (`python3 -m pip install Pillow`); `fit_curves.py` also needs numpy (`python3 -m pip install numpy`). `render_svg.py` needs one SVG renderer
 (`rsvg-convert`, cairosvg, Inkscape or Chrome). `inspect_svg.py` needs nothing extra.
 The skill runs these itself when it can:
 
 ```sh
 python3 vector-reconstruction/scripts/extract_contours.py logo.png --out evidence
+python3 vector-reconstruction/scripts/fit_curves.py logo.png --out fitted.svg
 python3 vector-reconstruction/scripts/render_svg.py candidate.svg rendered.png --width W --height H
 python3 vector-reconstruction/scripts/compare_rasters.py evidence/source.png rendered.png --out comparison
 python3 vector-reconstruction/scripts/trace_lineart.py drawing.png --out drawing.svg
@@ -101,7 +102,7 @@ python3 vector-reconstruction/scripts/render_svg.py candidate.svg sizes.png --si
 python3 vector-reconstruction/scripts/download_page.py logo.svg --name Acme --out download.html
 ```
 
-They trace the image, render the SVG, measure overlap, audit it (duplicates, hidden
+They trace the image (`fit_curves.py` fits smooth, minimal curves to lettering and rough edges), render the SVG, measure overlap, audit it (duplicates, hidden
 shapes, bad joins, open paths, live strokes; wireframe included) and make a small-size
 legibility sheet. `download_page.py` builds the one-button download page that the skill
 publishes as an Artifact in Claude's apps. Use `--help` on any script. `prepare_evidence.py` is only needed if

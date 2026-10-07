@@ -57,7 +57,8 @@ are intentional) and deliver as in step 9. If `extract_contours.py` ever prints 
 
 Run helpers relative to this skill's directory (in Claude Code, `${CLAUDE_SKILL_DIR}`).
 They need Python 3; `extract_contours.py`, `compare_rasters.py` and `render_svg.py --sizes`
-also need Pillow, and `render_svg.py` needs an installed SVG renderer.
+also need Pillow, `fit_curves.py` needs Pillow and numpy, and `render_svg.py` needs an
+installed SVG renderer.
 
 ## 1. Brief: decide what must survive
 
@@ -105,6 +106,26 @@ If the user supplies an existing `logo-designer-brief` export, run
 they supply an existing SVG to clean up, run `scripts/inspect_svg.py` on it first (step 8)
 to see its problems, and still render it beside the source image.
 
+For lettering, wordmarks and any organic or rough-edged shapes, also fit a clean outline
+straight from the image. `extract_contours.py` traces pixel edges, so `trace.svg` follows
+every bump of a rough or low-resolution edge (hundreds of points for a few letters):
+
+```sh
+python scripts/fit_curves.py logo.png --out fitted.svg
+```
+
+It smooths edge noise, keeps real corners sharp, turns straight edges into exact lines
+(horizontal and vertical ones snapped to the axis), and fits few cubic Beziers with
+anchors at the horizontal and vertical extrema and handles aligned there. It prints the
+node count and the largest distance from the traced edge (about 1 px is normal; it warns
+above 2). Use `fitted.svg` as the starting geometry for lettering instead of `trace.svg`. It does
+not recognize geometric primitives (a rounded rectangle gets anchors mid-edge); rebuild
+circles, rectangles and arcs as native shapes as step 5 says.
+Tune it only when the render shows a problem: `--smooth` (rougher edges need more),
+`--tolerance` (fewer or more anchors), `--corner-angle` (a soft corner flattened or a
+curve turned into a corner) and `--line-ratio` (how much a long edge may bow and still
+become a line; raise to 0.015 for rough lettering, set 0 to keep every bow).
+
 Do not load embedded base64 or thousands of raw points into the conversation, and do not
 silently truncate detailed regions to fit a context limit. Evidence priority: original
 artwork first, then observed boundaries, then existing SVG and primitive hypotheses.
@@ -147,7 +168,9 @@ dimensions, grids or primitive counts from another logo.
 
 Redraw high-value elements from the inferred construction, using the source image as a
 locked reference underneath (the wireframe in step 8 shows your geometry over it).
-Patching hundreds of auto-generated nodes is slower and worse.
+Patching hundreds of auto-generated nodes is slower and worse; a delivered path that
+still has dozens of near-coincident anchors or runs of tiny straight segments standing in
+for a curve has not been rebuilt.
 
 - True primitives for geometric parts: `rect` (with `rx`), `circle`, `ellipse`, polygons,
   or exact SVG arcs with correct direction and large-arc flags. Share centers between
@@ -157,10 +180,14 @@ Patching hundreds of auto-generated nodes is slower and worse.
 - Cubic Beziers for organic or custom contours, with anchors at extrema, corners and
   transitions, handles aligned at smooth joins, horizontal/vertical handles at extrema
   where the shape allows. Straight runs are exact lines; horizontals and verticals are exact.
-- Lettering: redraw each glyph with consistent stem widths, even bowls, clean counters
-  and matched terminals; keep spacing and optical quirks that belong to the logo. Use a
-  font only if it is identified with confidence and the glyphs match; deliver outlines,
-  never live `<text>`. Check every counter and small terminal individually.
+- Lettering: start from the `fit_curves.py` outline, then redraw each glyph with
+  consistent stem widths, even bowls, clean counters and matched terminals; keep spacing
+  and optical quirks that belong to the logo. A sensible target is about 4 anchors for a
+  round letter such as O (plus 4 for each counter), 6 to 10 for an angular letter such as
+  L, N or E, and a straight edge always as one line. Repeated letters should end up with
+  matching shapes; where the source differs only by edge roughness, make them identical.
+  Use a font only if it is identified with confidence and the glyphs match; deliver
+  outlines, never live `<text>`. Check every counter and small terminal individually.
 
 ## 6. Simplify carefully
 
