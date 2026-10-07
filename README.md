@@ -1,11 +1,11 @@
 # Vector Reconstruction
 
-An AI skill that rebuilds an existing logo as a clean, editable SVG, the way a senior
+An AI skill that rebuilds an existing image as a clean, editable SVG, the way a senior
 designer would: it treats auto-tracing as a rough draft, removes debris and duplicate
 shapes, recovers the real geometry (circles, arcs, true curves, redrawn letters), snaps
 colors to a clean palette and checks the result at real sizes.
 
-**All it needs is the logo image.** It creates its own contour evidence from the image.
+**All it needs is the image.** It creates its own contour evidence from the image.
 You can also give it an existing SVG to clean up. Detailed drawings and illustrations
 (pencil, ink, blueprint, sketches) are accepted too: they are vectorized automatically as
 tonal layers of one ink color, which is good rather than perfect.
@@ -33,9 +33,9 @@ Download this repo (**Code → Download ZIP**) and copy the `vector-reconstructi
 
 ## Use it
 
-Attach the logo and ask:
+Attach the image and ask:
 
-> Use the vector-reconstruction skill to vectorize this logo.
+> Use the vector-reconstruction skill to vectorize this image.
 
 That is all it needs. It works out the details itself and replies with a single link that
 downloads the finished, editable SVG. No questions, no report.
@@ -52,13 +52,13 @@ downloads the finished, editable SVG. No questions, no report.
 
 Any AI chat that accepts image uploads can follow the skill, even without a skill loader.
 
-1. Upload the logo image.
+1. Upload the image.
 2. Upload or paste [`vector-reconstruction/SKILL.md`](vector-reconstruction/SKILL.md) as
    the instructions (add [`production-targets.md`](vector-reconstruction/references/production-targets.md)
    if you can attach a second file).
 3. Send:
 
-> Follow the attached Vector Reconstruction instructions and vectorize the uploaded logo.
+> Follow the attached Vector Reconstruction instructions and vectorize the uploaded image.
 > Give me the finished SVG as a downloadable file or link.
 
 What to expect:
@@ -117,5 +117,5 @@ vector-reconstruction/
 └── scripts/                      the helpers above
 ```
 
-No API keys, hosted service or logos are bundled. Source images and generated SVGs are
+No API keys, hosted service or images are bundled. Source images and generated SVGs are
 your inputs and outputs.
