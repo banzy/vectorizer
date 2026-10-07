@@ -124,6 +124,12 @@ true primitive the measurements support:
   Straight ends that point at a shared centre become exactly radial.
 - An arc that runs into straight edges is made exactly tangent to them: a rounded corner,
   or a round cap between parallel edges.
+- A whole shape that is practically a basic figure becomes that exact figure: a circle
+  (even 98% round), an ellipse, a rectangle or square (right angles, equal opposite sides,
+  upright when nearly so), an isosceles or right triangle, or a regular polygon (equal
+  sides and angles, a vertex or flat side on an axis). It is written as a real `<circle>`,
+  `<ellipse>`, `<rect>` or `<polygon>` (inside the compound path when it has holes or is
+  one). Rounded corners, stars and free shapes are left alone.
 - Everything else becomes a few cubic Beziers, anchored at the horizontal and vertical
   extremes, with smooth joins made exactly smooth.
 
@@ -133,7 +139,7 @@ curves stay curves.
 
 Read its summary, not the SVG. `geometry` lists the shared centres with their radii, the
 ring widths and the radial ends found. Treat these as construction evidence for step 4.
-`per_contour` gives the nodes, lines, arcs and curves of each shape, and how far each strays
+`per_contour` gives the nodes, lines, arcs and curves of each shape, and its `primitive` when it was replaced by an exact figure, and how far each strays
 from the trace. A `note` names shapes it moved more than 2 px to make arcs exact. That is
 intended when the source edge is uneven: confirm it on the render. A `warning` names real
 problems, such as an outline straying from the trace or folding back on itself.
@@ -142,8 +148,9 @@ Use `fitted.svg` as the starting geometry instead of `trace.svg`. Tune it only w
 render shows a problem: `--smooth` (rougher edges need more), `--tolerance` (fewer or more
 anchors), `--corner-angle` (a soft corner flattened or a curve turned into a corner),
 `--line-ratio` (how much a long edge may bow and still become a line; raise to 0.015 for
-rough lettering, set 0 to keep every bow), and `--no-geometry` (switch off arc
-recognition when the evidence is wrong, then rebuild the geometry by hand).
+rough lettering, set 0 to keep every bow), `--no-geometry` (switch off arc
+recognition when the evidence is wrong, then rebuild the geometry by hand) and `--no-shapes`
+(keep circles, rectangles and polygons as traced paths).
 
 Do not load embedded base64 or thousands of raw points into the conversation, and do not
 silently truncate detailed regions to fit a context limit. Evidence priority: original
@@ -197,7 +204,9 @@ Patching hundreds of auto-generated nodes is slower and worse; a delivered path 
 still has dozens of near-coincident anchors or runs of tiny straight segments standing in
 for a curve has not been rebuilt.
 
-- True primitives for geometric parts: `rect` (with `rx`), `circle`, `ellipse`, polygons,
+- True primitives for geometric parts, and for any shape that is practically one (98% of a
+  circle, square, rectangle, triangle or regular polygon is that figure, never four or more
+  free anchors): `rect` (with `rx`), `circle`, `ellipse`, polygons,
   or exact SVG arcs with correct direction and large-arc flags. Concentric arcs share one
   exact centre (the same coordinates, not nearly the same) whenever the measurements agree.
   Never leave Bezier approximations of arcs that should be concentric: they drift off-centre.

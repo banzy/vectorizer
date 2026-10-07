@@ -79,7 +79,7 @@ What to expect:
 2. Traces the image into per-color contours and a core palette.
 3. Removes debris: background rectangles, specks, fake white knockouts, stacked
    duplicates and hidden shapes.
-4. Infers construction: shared centres, repeated radii and widths, radial ends, tangent fillets, alignment, symmetry.
+4. Infers construction: shared centres, repeated radii and widths, radial ends, tangent fillets, basic figures (a near-circle is a circle, a near-square a square), alignment, symmetry.
 5. Rebuilds with true primitives, arcs and deliberate Béziers; redraws lettering.
 6. Simplifies without changing the character, then organizes colors, holes and groups.
 7. Validates against the source, in outline mode and at small sizes.
@@ -102,7 +102,7 @@ python3 vector-reconstruction/scripts/render_svg.py candidate.svg sizes.png --si
 python3 vector-reconstruction/scripts/download_page.py logo.svg --name Acme --out download.html
 ```
 
-They trace the image (`fit_curves.py` rebuilds every edge as the simplest true primitive the measurements support: exact lines, exact arcs with shared centres, equal radii and widths, radial ends and tangent fillets, and few smooth Béziers for everything else), render the SVG, measure overlap, audit it (duplicates, hidden
+They trace the image (`fit_curves.py` rebuilds every edge as the simplest true primitive the measurements support: exact lines, exact arcs with shared centres, equal radii and widths, radial ends and tangent fillets, exact circles, ellipses, rectangles, squares, triangles and regular polygons wherever a shape is practically one, and few smooth Béziers for everything else), render the SVG, measure overlap, audit it (duplicates, hidden
 shapes, bad joins, arcs that are almost but not exactly concentric, open paths, live strokes; wireframe included) and make a small-size
 legibility sheet. `download_page.py` builds the one-button download page that the skill
 publishes as an Artifact in Claude's apps. Use `--help` on any script. `prepare_evidence.py` is only needed if

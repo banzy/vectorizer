@@ -28,6 +28,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import extract_contours as ec  # noqa: E402
 import geometry as geo  # noqa: E402
+import shapes as shp  # noqa: E402
 
 STEP = 0.5  # arc-length spacing, in pixels, of the resampled contour
 
@@ -718,6 +719,16 @@ def deviation(curve, dense):
     return float(max(forward.max(), backward.max())), float(np.concatenate([forward, backward]).mean())
 
 
+def inside(point, polygon):
+    """Even-odd point-in-polygon test."""
+    x, y = point
+    a, b = polygon, np.roll(polygon, -1, axis=0)
+    crosses = (a[:, 1] > y) != (b[:, 1] > y)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        x_at = a[:, 0] + (y - a[:, 1]) * (b[:, 0] - a[:, 0]) / (b[:, 1] - a[:, 1])
+    return bool((crosses & (x < x_at)).sum() % 2)
+
+
 def recognise_geometry(contours, max_radius):
     """Find circular runs across every contour and apply shared centres, radii, widths and radial ends."""
     arcs, owners = [], []
@@ -824,6 +835,9 @@ def main():
     parser.add_argument("--min-gap", type=float, default=8.0, help="minimum pixels between anchors from extrema")
     parser.add_argument("--no-geometry", action="store_true",
                         help="do not recognise circles and arcs (shared centres, equal radii and widths, radial ends)")
+    parser.add_argument("--no-shapes", action="store_true",
+                        help="do not replace near-perfect circles, ellipses, rectangles, triangles and regular "
+                             "polygons with the exact figure")
     parser.add_argument("--min-turn", type=float, default=5.0,
                         help="minimum degrees a curve must turn around an extremum to get an anchor there")
     args = parser.parse_args()
@@ -844,27 +858,42 @@ def main():
                              "traced_points": len(traced)})
     geometry = None if args.no_geometry else recognise_geometry(contours, 2.0 * math.hypot(width, height))
     svg_paths, report, nodes_total = [], [], 0
+    fmt = lambda v: ec.number(round(float(v), 2))  # noqa: E731
     for color, _ in layers:
-        data = []
+        built = []
         for contour in (c for c in contours if c["color"] == color):
             pieces = [piece for run in contour["runs"] for piece in run_pieces(run, args, contour["tolerance"])]
             pieces = refit_curves(resolve(fillet(pieces), reach=max(6.0, 6 * contour["tolerance"])))
-            outline = sample_path(pieces)
+            shape = None
+            if not args.no_shapes:
+                size = diagonal_of(contour["loop"])
+                shape = shp.recognise(pieces, contour["loop"], sample_path(pieces), deviation, min(max(1.0, 0.012 * size), 4.0))
+            outline = shp.outline(shape) if shape else sample_path(pieces)
             worst, mean = deviation(outline, contour["loop"])
-            area_change = abs(polygon_area(outline) - polygon_area(contour["loop"])) / abs(polygon_area(contour["loop"]))
+            area_change = abs(abs(polygon_area(outline)) - abs(polygon_area(contour["loop"]))) / abs(polygon_area(contour["loop"]))
             perimeter_change = perimeter(outline) / perimeter(contour["loop"]) - 1
-            nodes_total += len(pieces)
-            report.append({"color": color, "nodes": len(pieces),
-                           "lines": sum(p["kind"] == "line" for p in pieces),
-                           "arcs": sum(p["kind"] == "arc" for p in pieces),
-                           "curves": sum(p["kind"] == "curve" for p in pieces),
+            count = (lambda kind: 0 if shape else sum(p["kind"] == kind for p in pieces))
+            nodes = shape["nodes"] if shape else len(pieces)
+            nodes_total += nodes
+            report.append({"color": color, "nodes": nodes, "primitive": shape["kind"] if shape else None,
+                           "lines": count("line"), "arcs": count("arc"), "curves": count("curve"),
                            "traced_points": contour["traced_points"],
                            "max_deviation_px": round(worst, 2), "mean_deviation_px": round(mean, 2),
                            "area_change_pct": round(100 * area_change, 2),
                            "perimeter_change_pct": round(100 * perimeter_change, 2)})
-            data.append(path_data(pieces))
+            built.append((contour, shape, pieces))
+        holes = [c for c, _, _ in built if c["area"] < 0]
+        data, standalone = [], []
+        for contour, shape, pieces in built:
+            alone = shape is not None and contour["area"] > 0 and not any(
+                inside(h["loop"][0], contour["loop"]) for h in holes)
+            if alone:
+                standalone.append(shp.element(shape, color, fmt))
+            else:
+                data.append(shp.path_data(shape, fmt) if shape else path_data(pieces))
         if data:
             svg_paths.append(f'<path fill="{color}" fill-rule="evenodd" d="{" ".join(data)}"/>')
+        svg_paths.extend(standalone)
     if not svg_paths:
         sys.exit("No contours were found. Lower --threshold or --min-area.")
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -879,11 +908,11 @@ def main():
     if folds:
         warnings.append(f"Contours {folds} differ from the trace by more than 5% in area or length: an edge may "
                         "fold back on itself. Look at the wireframe and redraw those shapes.")
-    loose = [i for i, r in enumerate(report) if r["max_deviation_px"] > 2.0 and r["arcs"] == 0]
+    loose = [i for i, r in enumerate(report) if r["max_deviation_px"] > 2.0 and r["arcs"] == 0 and not r["primitive"]]
     if loose:
         warnings.append(f"Contours {loose} stray more than 2 px from the traced edge: check them against the "
                         "source, then lower --smooth or --tolerance, or redraw that part by hand.")
-    moved = [i for i, r in enumerate(report) if r["max_deviation_px"] > 2.0 and r["arcs"] > 0]
+    moved = [i for i, r in enumerate(report) if r["max_deviation_px"] > 2.0 and (r["arcs"] > 0 or r["primitive"])]
     if moved:
         summary["note"] = (f"Contours {moved} were moved more than 2 px to make their arcs exact (shared centres, "
                            "equal radii and widths). That is intended when the source edge is uneven; compare the "
