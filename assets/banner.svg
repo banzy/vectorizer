@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="240" viewBox="0 0 1280 240" role="img" aria-labelledby="t d">
+<title id="t">Vector Reconstruction</title>
+<desc id="d">An AI skill that turns any image into clean, editable SVG: a rough trace of 16 points per circle becomes two exact circles with 8 anchors.</desc>
+<rect x=".5" y=".5" width="1279" height="239" rx="14" fill="#f8fafc" stroke="#e2e8f0"/>
+<g font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif">
+<text x="56" y="108" font-size="44" font-weight="700" fill="#0f172a">Vector Reconstruction</text>
+<text x="58" y="146" font-size="20" fill="#475569">Any image in. Clean, editable SVG out.</text>
+</g>
+<g fill="none" stroke="#ef4444" stroke-opacity=".75" stroke-width="1.1" stroke-linejoin="round"><path d="M865.8 104.0L861.2 129.3L847.6 151.6L825.2 164.9L800.0 170.0L774.6 165.2L754.0 150.0L739.0 129.3L733.6 104.0L738.2 78.4L754.2 58.2L775.0 43.6L800.0 39.3L825.6 42.1L847.1 56.9L859.6 79.3Z"/><path d="M841.5 104.0L838.3 119.9L828.6 132.6L815.4 141.3L800.0 142.9L785.3 139.5L771.7 132.3L764.3 118.8L761.0 104.0L763.8 89.0L772.8 76.8L784.7 67.2L800.0 64.2L815.7 66.0L828.3 75.7L837.4 88.5Z"/></g>
+<g fill="#ef4444" fill-opacity=".8"><circle cx="865.8" cy="104.0" r="2.2"/><circle cx="861.2" cy="129.3" r="2.2"/><circle cx="847.6" cy="151.6" r="2.2"/><circle cx="825.2" cy="164.9" r="2.2"/><circle cx="800.0" cy="170.0" r="2.2"/><circle cx="774.6" cy="165.2" r="2.2"/><circle cx="754.0" cy="150.0" r="2.2"/><circle cx="739.0" cy="129.3" r="2.2"/><circle cx="733.6" cy="104.0" r="2.2"/><circle cx="738.2" cy="78.4" r="2.2"/><circle cx="754.2" cy="58.2" r="2.2"/><circle cx="775.0" cy="43.6" r="2.2"/><circle cx="800.0" cy="39.3" r="2.2"/><circle cx="825.6" cy="42.1" r="2.2"/><circle cx="847.1" cy="56.9" r="2.2"/><circle cx="859.6" cy="79.3" r="2.2"/><circle cx="841.5" cy="104.0" r="2.2"/><circle cx="838.3" cy="119.9" r="2.2"/><circle cx="828.6" cy="132.6" r="2.2"/><circle cx="815.4" cy="141.3" r="2.2"/><circle cx="800.0" cy="142.9" r="2.2"/><circle cx="785.3" cy="139.5" r="2.2"/><circle cx="771.7" cy="132.3" r="2.2"/><circle cx="764.3" cy="118.8" r="2.2"/><circle cx="761.0" cy="104.0" r="2.2"/><circle cx="763.8" cy="89.0" r="2.2"/><circle cx="772.8" cy="76.8" r="2.2"/><circle cx="784.7" cy="67.2" r="2.2"/><circle cx="800.0" cy="64.2" r="2.2"/><circle cx="815.7" cy="66.0" r="2.2"/><circle cx="828.3" cy="75.7" r="2.2"/><circle cx="837.4" cy="88.5" r="2.2"/></g>
+<path d="M888 104H964M952 95L964 104L952 113" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M1126 104A66 66 0 1 1 994 104A66 66 0 1 1 1126 104ZM1100 104A40 40 0 1 1 1020 104A40 40 0 1 1 1100 104Z" fill="#22a55b" fill-rule="evenodd"/>
+<g fill="#ffffff" stroke="#0f172a" stroke-width="1.2"><rect x="1122.5" y="100.5" width="7" height="7" rx="1"/><rect x="1056.5" y="166.5" width="7" height="7" rx="1"/><rect x="990.5" y="100.5" width="7" height="7" rx="1"/><rect x="1056.5" y="34.5" width="7" height="7" rx="1"/><rect x="1096.5" y="100.5" width="7" height="7" rx="1"/><rect x="1056.5" y="140.5" width="7" height="7" rx="1"/><rect x="1016.5" y="100.5" width="7" height="7" rx="1"/><rect x="1056.5" y="60.5" width="7" height="7" rx="1"/></g>
+<g font-family="Inter,'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" text-anchor="middle" fill="#64748b">
+<text x="800" y="206">Auto-traced: 16 points per circle</text>
+<text x="1060" y="206">Rebuilt: 2 circles, 8 anchors</text>
+</g>
+</svg>

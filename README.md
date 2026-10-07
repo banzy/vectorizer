@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.svg" alt="Vector Reconstruction: an AI skill that turns any image into clean, editable SVG. A noisy auto-trace becomes exact circles with a few anchors." width="100%">
+</p>
+
 # Vector Reconstruction
 
 An AI skill that rebuilds an existing image as a clean, editable SVG, the way a senior
@@ -111,6 +115,7 @@ you already have a `logo-designer-brief` JSON export from the web app.
 ## Repository
 
 ```text
+assets/banner.svg                 the banner above
 vector-reconstruction/
 ├── SKILL.md                      instructions
 ├── agents/openai.yaml            Codex metadata
