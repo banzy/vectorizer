@@ -210,6 +210,13 @@ for a curve has not been rebuilt.
   or exact SVG arcs with correct direction and large-arc flags. Concentric arcs share one
   exact centre (the same coordinates, not nearly the same) whenever the measurements agree.
   Never leave Bezier approximations of arcs that should be concentric: they drift off-centre.
+- When two parts of the same fill color actually touch or overlap (a crossbar fused into a
+  ring, a serif into a stem), draw them as one path (one `<path>`, every part as its own
+  subpath, `fill-rule="evenodd"`), never as separate elements laid edge to edge. Two same-
+  color shapes that only abut can show a hairline seam at the join, however exactly their
+  coordinates match, because each is anti-aliased on its own; one path with those parts as
+  subpaths is scan-converted together and has no seam. Keep a true primitive standalone
+  (its own `<rect>`, `<circle>`, ...) only when nothing else of that color touches it.
 - Centerline strokes with caps and joins for demonstrably uniform-width parts; filled
   outlines for variable-width silhouettes. Keep sharp joins sharp even next to rounded ends.
 - Cubic Beziers for organic or custom contours, with anchors at extrema, corners and
@@ -273,8 +280,9 @@ python scripts/render_svg.py inspection/wireframe.svg inspection/wireframe.png -
 and stacked duplicates: exact copies, offset or re-traced copies of the same object in
 any color, shapes fully or mostly hidden under later ones, repeated subpaths), path quality (almost-smooth joins, polylines standing in for curves,
 redundant and near-coincident anchors, lines slightly off-axis, wrong hole winding),
-construction (`near-concentric` arcs whose centres almost but not exactly match, and
-`near-equal-radius` arcs around one centre) and
+construction (`near-concentric` arcs whose centres almost but not exactly match,
+`near-equal-radius` arcs around one centre, and `touching-same-fill`: separate same-color
+shapes drawn edge to edge, which risks a hairline seam — union them into one path) and
 production issues (live strokes, open filled paths, clipping, text, gradients,
 near-duplicate colors). The wireframe shows anchors, handles and flagged points (red)
 over the faded source, with duplicate and hidden shapes outlined in dashed red. Fix real

@@ -107,7 +107,8 @@ python3 vector-reconstruction/scripts/download_page.py logo.svg --name Acme --ou
 ```
 
 They trace the image (`fit_curves.py` rebuilds every edge as the simplest true primitive the measurements support: exact lines, exact arcs with shared centres, equal radii and widths, radial ends and tangent fillets, exact circles, ellipses, rectangles, squares, triangles and regular polygons wherever a shape is practically one, and few smooth Béziers for everything else), render the SVG, measure overlap, audit it (duplicates, hidden
-shapes, bad joins, arcs that are almost but not exactly concentric, open paths, live strokes; wireframe included) and make a small-size
+shapes, bad joins, arcs that are almost but not exactly concentric, separate same-color shapes
+drawn edge to edge where a seam could show, open paths, live strokes; wireframe included) and make a small-size
 legibility sheet. `download_page.py` builds the one-button download page that the skill
 publishes as an Artifact in Claude's apps. Use `--help` on any script. `prepare_evidence.py` is only needed if
 you already have a `logo-designer-brief` JSON export from the web app.

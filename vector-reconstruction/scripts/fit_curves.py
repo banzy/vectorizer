@@ -729,6 +729,21 @@ def inside(point, polygon):
     return bool((crosses & (x < x_at)).sum() % 2)
 
 
+def touches(a, b, tol, cap=150):
+    """True when two closed outlines come within `tol` px of each other (they are meant to be one shape)."""
+    def thin(points):
+        step = max(1, len(points) // cap)
+        return points[::step]
+    pa, pb = thin(a), thin(b)
+    lo_a, hi_a = pa.min(axis=0), pa.max(axis=0)
+    lo_b, hi_b = pb.min(axis=0), pb.max(axis=0)
+    if (hi_a[0] + tol < lo_b[0] or hi_b[0] + tol < lo_a[0] or
+            hi_a[1] + tol < lo_b[1] or hi_b[1] + tol < lo_a[1]):
+        return False
+    gaps = np.hypot(pa[:, None, 0] - pb[None, :, 0], pa[:, None, 1] - pb[None, :, 1])
+    return bool(gaps.min() <= tol)
+
+
 def recognise_geometry(contours, max_radius):
     """Find circular runs across every contour and apply shared centres, radii, widths and radial ends."""
     arcs, owners = [], []
@@ -883,10 +898,16 @@ def main():
                            "perimeter_change_pct": round(100 * perimeter_change, 2)})
             built.append((contour, shape, pieces))
         holes = [c for c, _, _ in built if c["area"] < 0]
+        positives = [c for c, _, _ in built if c["area"] > 0]
+        touch_tol = max(0.6, 0.0015 * math.hypot(width, height))
+        crowded = {id(a) for i, a in enumerate(positives) for b in positives[i + 1:]
+                  if touches(a["loop"], b["loop"], touch_tol)}
         data, standalone = [], []
         for contour, shape, pieces in built:
-            alone = shape is not None and contour["area"] > 0 and not any(
-                inside(h["loop"][0], contour["loop"]) for h in holes)
+            # A shape touching another contour of the same color is left in the shared path: drawing it as
+            # a separate element would leave a hairline seam where their anti-aliased edges meet.
+            alone = (shape is not None and contour["area"] > 0 and id(contour) not in crowded and
+                    not any(inside(h["loop"][0], contour["loop"]) for h in holes))
             if alone:
                 standalone.append(shp.element(shape, color, fmt))
             else:

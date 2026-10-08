@@ -505,6 +505,20 @@ def circle_through(points):
     return (cx, cy), radius, worst
 
 
+
+def edge_distance(point, polygon):
+    """Distance from `point` to the nearest edge of the closed polyline `polygon`."""
+    best = math.inf
+    for i in range(len(polygon)):
+        a, b = polygon[i], polygon[(i + 1) % len(polygon)]
+        edge = (b[0] - a[0], b[1] - a[1])
+        length2 = edge[0] * edge[0] + edge[1] * edge[1]
+        t = 0.0 if length2 < 1e-12 else max(0.0, min(1.0, ((point[0] - a[0]) * edge[0] +
+                                                            (point[1] - a[1]) * edge[1]) / length2))
+        foot = (a[0] + t * edge[0], a[1] + t * edge[1])
+        best = min(best, math.dist(point, foot))
+    return best
+
 def construction(records, size, add):
     """Arcs that almost, but not exactly, share a centre or a radius: a designer gives them one exact value."""
     arcs = []
@@ -543,6 +557,45 @@ def construction(records, size, add):
                     reported.add(key)
                     add("near-equal-radius", f"Concentric arcs with radii {r1:.2f} and {r2:.2f}: make them one "
                                              "radius, or separate them clearly.", name, at)
+
+
+
+def seams(records, size, add):
+    """Separate shapes of the same fill color that touch or nearly touch: anti-aliasing can leave a hairline
+    gap there even when the coordinates match. A designer unions touching same-color shapes into one path."""
+    tol = max(0.5, size * 0.001)
+    reported = set()
+    for i, a in enumerate(records):
+        if not a["_fill"] or a["fill"] is None:
+            continue
+        for b in records[i + 1:]:
+            if not b["_fill"] or b["fill"] != a["fill"]:
+                continue
+            abox, bbox = a["bbox"], b["bbox"]
+            if (abox[2] + tol < bbox[0] or bbox[2] + tol < abox[0] or
+                    abox[3] + tol < bbox[1] or bbox[3] + tol < abox[1]):
+                continue
+            thin = lambda points: points[::max(1, len(points) // 150)]  # noqa: E731
+            pa = thin([p for s in a["_subpaths"] for p in s["polygon"]])
+            pb = thin([p for s in b["_subpaths"] for p in s["polygon"]])
+            if not pa or not pb:
+                continue
+            # Point-to-point distance misses a tangent that lands on a straight edge rather than a
+            # sampled vertex (a rectangle has only 4), so check each shape's points against the other's
+            # edges. Each subpath's own ring is tested separately: concatenating them as one polygon
+            # would draw a bogus edge straight across the canvas, from one subpath's end to the next's start.
+            near_b = lambda p: min(edge_distance(p, s["polygon"]) for s in b["_subpaths"])  # noqa: E731
+            near_a = lambda q: min(edge_distance(q, s["polygon"]) for s in a["_subpaths"])  # noqa: E731
+            at, gap = min([(p, near_b(p)) for p in pa] + [(q, near_a(q)) for q in pb], key=lambda pair: pair[1])
+            if gap <= tol:
+                key = tuple(sorted((a["id"], b["id"])))
+                if key not in reported:
+                    reported.add(key)
+                    add("touching-same-fill", f"{a['id']} and {b['id']} are separate shapes of the same fill "
+                                              f"color ({a['fill']}) that touch or nearly touch ({gap:.2f} px "
+                                              "apart): anti-aliasing can leave a hairline seam there. Union them "
+                                              "into one path (one <path>, both as subpaths) instead of two "
+                                              "elements.", a["id"], at)
 
 
 def inspect(svg_path, target, background, min_feature):
@@ -710,6 +763,7 @@ def inspect(svg_path, target, background, min_feature):
 
     stacking(records, view, add)
     construction(records, size, add)
+    seams(records, size, add)
 
     palette = sorted(c for c in colors if rgb(c))
     for i, a in enumerate(palette):
